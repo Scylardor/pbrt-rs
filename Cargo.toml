@@ -1,0 +1,7 @@
+[package]
+name = "rpbrt"
+version = "0.1.0"
+authors = ["Scylardor <baron.alx@gmail.com>"]
+
+[[example]]
+name = "test_pbrt"
