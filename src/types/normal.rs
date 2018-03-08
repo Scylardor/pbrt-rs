@@ -19,18 +19,20 @@ impl<T> Normal3<T> where T: Real {
     }
 
     /// Copy a vector
-    pub fn from_vec(&mut self, vector: &Vector3<T>) -> &mut Self {
-        self.vec = *vector;
-        self
+    pub fn from_vec(vector: &Vector3<T>) -> Self {
+        let mut n = Normal3::new();
+        n.vec = *vector;
+        n
     }
 
 
     /// Construct from three values.
-    pub fn from_xyz(&mut self, x: T, y: T, z: T) -> &mut Self {
-        self.vec[0] = x;
-        self.vec[1] = y;
-        self.vec[2] = z;
-        self
+    pub fn from_xyz(x: T, y: T, z: T) -> Self {
+        let mut n = Normal3::new();
+        n.vec[0] = x;
+        n.vec[1] = y;
+        n.vec[2] = z;
+        n
     }
     
     /// The const vector accessor.
@@ -57,4 +59,34 @@ impl Normal3f {
         self
     }
 
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// TODO : Make tests for generic normal types.
+    /// Since Normal3f is the most likely type to use I implement tests for it
+    /// Rust generics are too complex for me atm (how to compare to 0 for any T ? Value mapping for any T of (1, 2, 3) ?)
+
+    #[test]
+    fn normal3f_new() {
+        let n = Normal3f::new();
+        assert_eq!(*n.vector(), zero());
+    }
+
+    #[test]
+    fn normal3f_from_vec() {
+        let test_v = Vector3f::new(1.,2.,3.);
+        let n = Normal3f::from_vec(&test_v);
+        assert_eq!(*n.vector(), test_v);
+    }
+
+    #[test]
+    fn normal3f_from_xyz() {
+        let test_v = Vector3f::new(1.,2.,3.);
+        let n = Normal3f::from_xyz(1.,2.,3.);
+        assert_eq!(*n.vector(), test_v);
+    }
 }
