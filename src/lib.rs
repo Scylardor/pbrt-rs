@@ -1,25 +1,20 @@
-extern crate nalgebra as na;
 
-pub use na::zero;
-
-pub mod types;
-pub use types::*;
+mod parser;
 
 mod math;
 
+pub mod types;
+
+use parser::{Parser, ParseError};
 
 pub struct Raytracer {
-    pub x: i32
+    scene_parser: Parser
 }
+
 
 impl Raytracer {
-    pub fn new() -> Raytracer {
-        Raytracer{x:42}
+    pub fn new_scene(scene_path: &str) -> Result<Self, ParseError> {
+        let scene = try!(Parser::from(scene_path));
+        Ok( Raytracer{scene_parser: scene} )
     }
-
 }
-
-pub fn hello() -> String {
-    String::from("hello!")
-}
-
