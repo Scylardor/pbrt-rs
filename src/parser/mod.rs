@@ -2,7 +2,7 @@ extern crate yaml_rust;
 use self::yaml_rust::{YamlLoader, Yaml};
 
 use std::fs::File; // File::open etc.
-use std::io::prelude::*; // read_to_string etc.
+use std::io::{self, Read}; // stdin, read_to_string etc.
 
 mod error;
 pub use self::error::ParseError;
@@ -21,10 +21,10 @@ pub struct Parser {
 impl Parser {
 
     pub fn from(name: &str) -> Result<Self, ParseError> {
-        match name {
-            "-" => println!("standard input!"),
-            _ =>  println!("filename!")
-        }
+        let yamlStr = match name {
+            "-" => try!(Self::read_stdin()),
+            _ =>  try!(Self::read_file(name)),
+        };
 
         let docs = try!(YamlLoader::load_from_str(&name));
 
@@ -32,9 +32,21 @@ impl Parser {
     }
 
 
-    fn parse_file(&mut self, filename: &str) {
-        let mut f = File::open(filename).unwrap();
-        let mut s = String::new();
-        f.read_to_string(&mut s).unwrap();
+    fn read_stdin() -> Result<String, ParseError> {
+        let mut buffer = String::new();
+        try!(io::stdin().read_to_string(&mut buffer));
+
+        Ok(buffer)
     }
+
+
+    fn read_file(filename: &str) -> Result<String, ParseError> {
+        let mut file = try!(File::open(filename));
+        let mut contents = String::new();
+        try!(file.read_to_string(&mut contents));
+
+        Ok(contents)
+    }
+
+
 }

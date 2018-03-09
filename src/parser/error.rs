@@ -1,5 +1,6 @@
 extern crate yaml_rust;
 
+use std;
 use std::error::Error;
 use std::fmt;
 
@@ -9,7 +10,8 @@ use std::fmt;
 /// - I/O Error (open/read file, etc...)
 #[derive(Debug)]
 pub enum ParseError {
-    YamlScanError(yaml_rust::ScanError)
+    YamlScanError(yaml_rust::ScanError),
+    IOError(std::io::Error)
 }
 
 impl From<yaml_rust::ScanError> for ParseError {
@@ -18,11 +20,18 @@ impl From<yaml_rust::ScanError> for ParseError {
     }
 }
 
+impl From<std::io::Error> for ParseError {
+    fn from(err: std::io::Error) -> ParseError {
+        ParseError::IOError(err)
+    }
+}
+
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             ParseError::YamlScanError(ref err) => err.fmt(f),
+            ParseError::IOError(ref err) => err.fmt(f),
         }
     }
 }
@@ -31,12 +40,14 @@ impl Error for ParseError {
     fn description(&self) -> &str {
         match *self {
             ParseError::YamlScanError(ref err) => err.description(),
+            ParseError::IOError(ref err) => err.description(),
         }
     }
 
     fn cause(&self) -> Option<&Error> {
         match *self {
-            ParseError::YamlScanError(ref err) => Some(err)
+            ParseError::YamlScanError(ref err) => Some(err),
+            ParseError::IOError(ref err) => Some(err),
         }
     }
 }
