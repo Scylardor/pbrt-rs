@@ -14,7 +14,13 @@ pub struct Raytracer {
 
 impl Raytracer {
     pub fn new_scene(scene_path: &str) -> Result<Self, ParseError> {
-        let scene = try!(Parser::from(scene_path));
-        Ok( Raytracer{scene_parser: scene} )
+        let parser = try!(Parser::from(scene_path));
+
+
+        Ok( Raytracer{scene_parser: parser} )
+    }
+
+    pub fn render_scene(&mut self) {
+        // Render scene...
     }
 }

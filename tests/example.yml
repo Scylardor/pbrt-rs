@@ -1,0 +1,46 @@
+integrator:
+    type: path
+
+sampler:
+    type: halton
+    pixelsamples: 128
+
+camera:
+    projection: perspective
+    fov: 45.0
+    position: [3.0, 4.0, 1.5]
+    look_at: [0.5, 0.5, 0.0]
+    up_vector: [0.0, 0.0, 1.0]
+
+film:
+    type: image
+    image_file: simple.png
+    resolution_xy: [400, 400]
+
+world:
+    textures:
+        - name: checks
+          spectrum: checkerboard
+          scale_uv: [8.0, 8.0]
+          rgb_tex1: [0.1, 0.1, 0.1]
+          rgb_tex2: [0.8, 0.8, 0.8]
+
+    lights:
+        - type: infinite
+          rgb_L: [0.4, 0.45, 0.5]
+
+        - type: distant
+          from: [-30.0, 40.0, 100.0]
+          blackbody_L: { temperature: 3000, scale: 1.5 }
+
+    shapes:
+        - type: sphere
+          radius: 1.0
+          material: glass
+
+        - type: triangle_mesh
+          points: [ [-20.0, -20.0, 0.0], [20.0, -20.0, 0.0], [20.0, 20.0, 0.0], [-20.0, 20.0, 0.0] ]
+          indices: [ [0, 1, 2], [0, 2, 3] ]
+          st: [ [0, 0], [1, 0], [1, 1], [0, 1] ]
+          material: { type: matte, texture_Kd: checks }
+          translate: [0.0, 0.0, -1.0]

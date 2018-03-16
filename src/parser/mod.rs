@@ -1,5 +1,5 @@
 extern crate yaml_rust;
-use self::yaml_rust::{YamlLoader, Yaml};
+use self::yaml_rust::{YamlLoader, Yaml, yaml};
 
 use std::fs::File; // File::open etc.
 use std::io::{self, Read}; // stdin, read_to_string etc.
@@ -21,14 +21,17 @@ pub struct Parser {
 impl Parser {
 
     pub fn from(name: &str) -> Result<Self, ParseError> {
-        let yamlStr = match name {
+        let yaml_str = match name {
             "-" => try!(Self::read_stdin()),
             _ =>  try!(Self::read_file(name)),
         };
 
-        let docs = try!(YamlLoader::load_from_str(&name));
+        let docs = try!(YamlLoader::load_from_str(&yaml_str));
 
-        Ok( Parser { scene_desc: docs } )
+        let p = Parser { scene_desc: docs };
+        p.parse();
+
+        Ok( p )
     }
 
 
@@ -46,6 +49,41 @@ impl Parser {
         try!(file.read_to_string(&mut contents));
 
         Ok(contents)
+    }
+
+    fn print_indent(indent: usize) {
+        for _ in 0..indent {
+            print!("    ");
+        }
+    }
+
+    fn dump_node(doc: &yaml::Yaml, indent: usize) {
+        match *doc {
+            yaml::Yaml::Array(ref v) => {
+                for x in v {
+                    Parser::dump_node(x, indent + 1);
+                }
+            },
+            yaml::Yaml::Hash(ref h) => {
+                for (k, v) in h {
+                    Parser::print_indent(indent);
+                    println!("{:?}:", k);
+                    Parser::dump_node(v, indent + 1);
+                }
+            },
+            _ => {
+                Parser::print_indent(indent);
+                println!("{:?}", doc);
+            }
+        }
+    }
+
+
+    pub fn parse(&self) {
+        for doc in &self.scene_desc {
+            println!("---");
+            Parser::dump_node(&doc, 0);
+        }
     }
 
 
