@@ -39,103 +39,44 @@ impl Parser {
         Ok( p )
     }
 
-    /// Used by the lexer to retrieve token values based on YAML documents.
-    pub fn get_string_value(&self, token: &str, parent_node: Option<&ParserNode>) -> Option<&String> {
-        match parent_node {
-            Some(node) => {
-                None
-            }
-            None => {
-                for doc in &self.scene_desc {
-                    match *doc {
-                        yaml::Yaml::String(ref s) => Some(s),
-                        _ => None
-                    };
-                }
-                None
-            }
-        }
-    }
 
-    /// Since ParserNodes are expected to be the parser's own nodes passed back to it, we can specify they have the same lifetime
-    /// than self to make Rustc happy!
-    fn get_hash_value<'a>(&'a self, token: &str, parent_node: Option<&'a ParserNode>, ) -> Option<&String> {
+    /// The signature of this function is a bit scary but it's not that hard : its goal is to be generic over any wanted value type (that's T).
+    /// So we pass a closure to the function that will check if the type variant we find under the key is what it's looking for.
+    /// e.g. if we search for a std::String value, T will be String, and F will be (Option<&'a yaml::Yaml>) -> Option(&String).
+    /// And since ParserNodes are expected to be the parser's own nodes passed back to it, we must specify they have the same lifetime than self
+    /// to make Rust happy!
+    fn get_hash_value<'a, T, F>(&'a self, key: &str, parent_node: Option<&'a ParserNode>, match_closure: F) -> Option<&T>
+        where F: Fn(Option<&yaml::Yaml>) -> Option<&T> {
         if let &yaml::Yaml::Hash(ref parent_hash) = match parent_node {
             Some(ref x) => x,
             None => &self.scene_desc[0]
         }
         {
-            let s = String::from(token);
-            return match parent_hash.get(&yaml::Yaml::String(s)) {
-                Some(&yaml::Yaml::String(ref string)) => Some(string),
-                _ => None
-            };
+            let s = String::from(key);
+            return match_closure(parent_hash.get(&yaml::Yaml::String(s)));
         }
         None
     }
 
 
-    /// Retrieve a String value from the hash node.
-    fn get_hash_string_value<'a>(hash_node: &'a yaml::Hash, key: &yaml::Yaml) -> Option<&'a String> {
-        match hash_node.get(key) {
+    /// Public-facing function to retrieve a String value from a hash under given key.
+    pub fn get_string<'a>(&'a self, key: &str, parent_node: Option<&'a ParserNode>) -> Option<&String> {
+        self.get_hash_value(key, parent_node, |optYaml| match optYaml {
             Some(&yaml::Yaml::String(ref string)) => Some(string),
             _ => None
-        }
+        })
     }
 
 
-    /// Since ParserNodes are expected to be the parser's own nodes passed back to it, we can specify they have the same lifetime
-    /// than self to make Rustc happy!
-    pub fn get_string_hash<'a>(&'a self, token: &str, parent_node: Option<&'a ParserNode>) -> Option<&String> {
-        if let &yaml::Yaml::Hash(ref parent_hash) = match parent_node {
-            Some(ref x) => x,
-            None => &self.scene_desc[0]
-        }
-        {
-            let key = yaml::Yaml::String(String::from(token));
-            return match parent_hash.get(&key) {
-                Some(&yaml::Yaml::String(ref string)) => Some(string),
-                _ => None
-            };
-        }
-        None
-    }
-
-    pub fn get_root_hash(&self, token: &str) -> Option<&ParserNode> {
-        if let &yaml::Yaml::Hash(ref hash) = &self.scene_desc[0] {
-            let s = String::from(token);
-            return hash.get(&yaml::Yaml::String(s));
-        }
-        None
-        // let integrator_doc = match &self.scene_desc[0] {
-        //     yaml::Yaml::Hash(ref hash) => hash.get(,
-        //     _ => println!("not found!")
-        // // if integrator_doc == Some(s) {
-        // //     println!("found!");
-        // // }
-        // // else {
-        // //     println!("not found!");
-        // // }
-
-        // let doc = &self.scene_desc[0];
-
-
-        // for doc in &self.scene_desc {
-        //     match *doc {
-        //         yaml::Yaml::Hash(ref hash) => {
-        //             for (k,v) in hash {
-        //                 match *k {
-        //                     yaml::Yaml::String(ref string) => {
-        //                         if *string == token { println!("found!"); }
-        //                     }
-        //                     _ => ()
-        //                 };
-        //             }
-        //         }
-        //         _ => ()
-        //     };
-        // }
-        
+    /// Public-facing function to retrieve a Hash value from a hash under given key.
+    /// It's a bit different from the others as we return the yaml::Yaml enum variant.
+    /// Indeed, the user won't use the hash directly, we need the Yaml variant enum value to retrieve contained data
+    /// in subsequent get_* calls. Returning the underlying Hash type wouldn't help from a client code POV.
+    pub fn get_hash<'a>(&'a self, key: &str, parent_node: Option<&'a ParserNode>) -> Option<&yaml::Yaml> {
+        self.get_hash_value(key, parent_node, |optYaml| match optYaml {
+            h @ Some(&yaml::Yaml::Hash(_)) => h,
+            _ => None
+        })
     }
 
 

@@ -16,28 +16,22 @@ fn get_default_integrator() -> Box<Integrator> {
 }
 
 fn get_integrator(parser: &Parser, hash_node: &ParserNode) -> Box<Integrator> {
-    let integ_type = parser.get_string_hash(TYPE_TOKEN, Some(hash_node));
+    let integ_type = parser.get_string(TYPE_TOKEN, Some(hash_node));
 
     match integ_type {
         Some(ref s) => println!("Type: {}", s),
         None => println!("No type specified!")
     }
-    println!("yep");
+
     Box::new(PathIntegrator::new())
 }
 
 pub fn lex_integrator(parser: &Parser) {
     let integrator_box : Box<i32> = Box::new(42);
-    let integrator_h = parser.get_root_hash(INTEGRATOR_TOKEN);
+    let integrator_h = parser.get_hash(INTEGRATOR_TOKEN, None);
 
     let boxed_integ = match integrator_h {
         Some(ref hash_node) => get_integrator(parser, hash_node),
         None => get_default_integrator()
     };
-
-    // match integrator_name {
-    //     Some(name) => ,
-    //     None =>
-
-    //}
 }
